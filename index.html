@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0a">
+<title>Morpho · Liquidation</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0a0a;--bg1:#111;--bg2:#181818;--bg3:#222;
+  --border:#2a2a2a;--border2:#333;
+  --text:#e8e8e8;--text2:#888;--text3:#555;
+  --accent:#4ade80;--accent-dim:#1a3a25;--accent-border:#1a4a2a;
+  --warn:#f59e0b;--warn-dim:#2d2010;--warn-border:#4a3010;
+  --danger:#f87171;--danger-dim:#2d1010;--danger-border:#5a1f1f;
+  --blue:#60a5fa;--blue-dim:#0f1f3a;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+  --radius:10px;--radius-sm:7px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5;overflow-x:hidden}
+
+/* ── HEADER ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:20;background:var(--bg);
+}
+.logo{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:0.1em;color:var(--text2)}
+.logo em{color:var(--accent);font-style:normal}
+.price-pill{
+  display:flex;align-items:center;gap:7px;
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:20px;padding:5px 12px;cursor:pointer;
+  font-family:var(--mono);font-size:12px;color:var(--text);
+  transition:border-color 0.15s;
+}
+.price-pill:hover{border-color:var(--accent)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.dot.loading{background:var(--warn);animation:blink 1s infinite}
+.dot.error{background:var(--danger)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── LAYOUT ── */
+.app{display:flex;flex-direction:column;min-height:calc(100vh - 53px)}
+
+/* Mobile: single column */
+.content{padding:20px;max-width:100%;flex:1}
+
+/* Desktop: two columns */
+@media(min-width:768px){
+  .app{flex-direction:row;align-items:flex-start}
+  .panel-left{width:380px;flex-shrink:0;padding:28px 24px;border-right:1px solid var(--border);position:sticky;top:53px;height:calc(100vh - 53px);overflow-y:auto}
+  .panel-right{flex:1;padding:28px 28px;overflow-y:auto}
+  .content{display:none}
+  .desktop-left{display:block}
+  .desktop-right{display:block}
+}
+@media(max-width:767px){
+  .panel-left,.panel-right{display:none}
+}
+
+/* ── SECTION ── */
+.sec-title{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  letter-spacing:0.12em;color:var(--text3);text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;margin-bottom:14px;
+}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.section{margin-bottom:22px}
+
+/* ── FIELDS ── */
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px;font-family:var(--mono);letter-spacing:0.03em}
+input[type=number],input[type=text]{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--radius-sm);color:var(--text);
+  font-family:var(--mono);font-size:14px;
+  padding:9px 12px;width:100%;outline:none;
+  transition:border-color 0.15s;-webkit-appearance:none;
+}
+input[type=number]:focus,input[type=text]:focus{border-color:var(--accent)}
+input[type=number]{-moz-appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* ── SLIDER ── */
+.slider-field{margin-bottom:18px}
+.slider-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.slider-head label{font-size:12px;color:var(--text2);font-family:var(--mono);letter-spacing:0.03em}
+.slider-head .sv{font-family:var(--mono);font-size:16px;font-weight:500;color:var(--text)}
+input[type=range]{
+  width:100%;height:4px;-webkit-appearance:none;appearance:none;
+  background:var(--bg3);border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+  background:var(--accent);border:2px solid var(--bg);cursor:pointer;
+}
+input[type=range]::-moz-range-thumb{
+  width:20px;height:20px;border-radius:50%;
+  background:var(--accent);border:2px solid var(--bg);cursor:pointer;
+}
+
+/* ── TOKEN PICKER ── */
+.token-picker{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tk{
+  padding:6px 14px;border-radius:20px;border:1px solid var(--border2);
+  background:var(--bg2);color:var(--text2);font-family:var(--mono);font-size:12px;
+  cursor:pointer;transition:all 0.15s;
+}
+.tk.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+
+/* ── METRICS ── */
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.metric-grid.wide{grid-template-columns:repeat(4,1fr)}
+.metric{
+  background:var(--bg1);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px;
+  transition:background 0.2s,border-color 0.2s;
+}
+.metric.span2{grid-column:1/-1}
+.metric.danger{background:var(--danger-dim);border-color:var(--danger-border)}
+.metric.warning{background:var(--warn-dim);border-color:var(--warn-border)}
+.metric.success{background:var(--accent-dim);border-color:var(--accent-border)}
+.m-label{font-size:10px;font-family:var(--mono);letter-spacing:0.08em;color:var(--text3);margin-bottom:6px;text-transform:uppercase}
+.m-value{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--text);line-height:1.1}
+.m-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.metric.span2 .m-value{font-size:28px}
+.metric.danger .m-value{color:var(--danger)}
+.metric.warning .m-value{color:var(--warn)}
+.metric.success .m-value{color:var(--accent)}
+
+/* ── STATUS BAR ── */
+.status-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 16px;border-radius:var(--radius);margin-bottom:16px;
+  border:1px solid var(--border);background:var(--bg2);
+  transition:all 0.2s;
+}
+.status-bar.danger{background:var(--danger-dim);border-color:var(--danger-border)}
+.status-bar.warning{background:var(--warn-dim);border-color:var(--warn-border)}
+.status-bar.success{background:var(--accent-dim);border-color:var(--accent-border)}
+.status-txt{font-size:13px;font-weight:500;color:var(--text)}
+.status-txt.danger{color:var(--danger)}
+.status-txt.warning{color:var(--warn)}
+.status-txt.success{color:var(--accent)}
+.status-hf{font-family:var(--mono);font-size:12px;color:var(--text2)}
+
+/* ── RISK BAR ── */
+.risk-wrap{margin-bottom:20px}
+.risk-bar-track{
+  height:8px;border-radius:4px;
+  background:linear-gradient(to right,var(--danger),var(--warn),var(--accent));
+  position:relative;margin-bottom:6px;
+}
+.risk-thumb{
+  position:absolute;top:50%;transform:translate(-50%,-50%);
+  width:16px;height:16px;border-radius:50%;
+  background:var(--text);border:2px solid var(--bg);
+  transition:left 0.35s cubic-bezier(0.34,1.4,0.64,1);
+  box-shadow:0 0 0 3px rgba(255,255,255,.08);
+}
+.risk-labels{display:flex;justify-content:space-between}
+.risk-labels span{font-size:10px;color:var(--text3);font-family:var(--mono)}
+
+/* ── CHART ── */
+.chart-wrap{position:relative;width:100%;height:200px}
+@media(min-width:768px){.chart-wrap{height:260px}}
+.chart-legend{display:flex;gap:16px;font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--mono)}
+.chart-legend span{display:flex;align-items:center;gap:5px}
+.leg-line{width:16px;height:2px;border-radius:1px;display:inline-block}
+.leg-dash{width:16px;height:0;display:inline-block;border-top:2px dashed var(--danger)}
+
+/* ── REFRESH ── */
+.refresh-btn{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);
+  padding:9px;color:var(--text2);font-family:var(--mono);font-size:12px;
+  cursor:pointer;transition:all 0.15s;width:100%;margin-top:6px;
+}
+.refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+.refresh-btn:active{transform:scale(0.98)}
+.spin{display:inline-block;transition:transform 0.4s}
+.spin.go{animation:rot 0.8s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.price-ts{font-size:10px;color:var(--text3);text-align:center;margin-top:6px;font-family:var(--mono)}
+
+/* ── INSTALL BANNER ── */
+.install-banner{
+  display:none;margin:0 20px 12px;
+  background:var(--blue-dim);border:1px solid #1a3a5a;
+  border-radius:var(--radius);padding:11px 14px;
+  font-size:12px;color:var(--blue);
+  align-items:center;justify-content:space-between;gap:10px;
+}
+.install-banner button{
+  background:var(--blue);color:#000;border:none;
+  border-radius:6px;padding:6px 12px;font-size:12px;
+  font-family:var(--mono);cursor:pointer;white-space:nowrap;
+}
+
+/* ── DIVIDER ── */
+hr{border:none;border-top:1px solid var(--border);margin:20px 0}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">MORPHO <em>·</em> LIQ</div>
+  <div class="price-pill" id="price-pill" onclick="refreshPrices()">
+    <span class="dot" id="price-dot"></span>
+    <span id="pill-txt">BTC —</span>
+  </div>
+</header>
+
+<div class="install-banner" id="install-banner">
+  <span>Installer l'app sur l'écran d'accueil</span>
+  <button id="install-btn">Installer</button>
+</div>
+
+<!-- MOBILE -->
+<div class="app">
+  <div class="content" id="mobile-content"></div>
+
+  <!-- DESKTOP LEFT -->
+  <div class="panel-left" id="desktop-left"></div>
+
+  <!-- DESKTOP RIGHT -->
+  <div class="panel-right" id="desktop-right"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const livePrice = { BTC: 63500, ETH: 2400 };
+let selectedToken = 'BTC';
+let chart = null;
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'flex';
+});
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  document.getElementById('install-banner').style.display = 'none';
+  deferredPrompt = null;
+});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+function fmtUSD(n) {
+  if (n <= 0) return '$0';
+  if (n >= 1000) return '$' + Math.round(n).toLocaleString('fr-FR');
+  return '$' + n.toFixed(2);
+}
+
+function buildInputsHTML(pfx) {
+  return `
+  <div class="section">
+    <div class="sec-title">Collatéral</div>
+    <div class="token-picker" id="${pfx}-token-picker">
+      <button class="tk active" data-token="BTC" onclick="selectToken(this,'${pfx}')">BTC</button>
+      <button class="tk" data-token="ETH" onclick="selectToken(this,'${pfx}')">ETH</button>
+      <button class="tk" data-token="CUSTOM" onclick="selectToken(this,'${pfx}')">Autre</button>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Quantité</label>
+        <input type="number" id="${pfx}-qty" value="0.5" step="0.001" min="0.0001" oninput="syncAndUpdate('${pfx}')">
+      </div>
+      <div class="field" id="${pfx}-custom-field" style="display:none">
+        <label>Prix manuel ($)</label>
+        <input type="number" id="${pfx}-custom-price" value="1000" step="100" min="1" oninput="syncAndUpdate('${pfx}')">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">Paramètres marché</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Actif collatéral</label>
+        <input type="text" id="${pfx}-collat-name" value="cbBTC" oninput="syncAndUpdate('${pfx}')">
+      </div>
+      <div class="field">
+        <label>Actif emprunté</label>
+        <input type="text" id="${pfx}-borrow-name" value="USDC" oninput="syncAndUpdate('${pfx}')">
+      </div>
+    </div>
+    <div class="field">
+      <label>Montant emprunté ($)</label>
+      <input type="number" id="${pfx}-debt" value="15000" step="100" min="1" oninput="syncAndUpdate('${pfx}')">
+    </div>
+    <div class="slider-field">
+      <div class="slider-head">
+        <label>LLTV</label>
+        <span class="sv" id="${pfx}-lltv-disp">86%</span>
+      </div>
+      <input type="range" id="${pfx}-lltv" min="10" max="98" value="86" step="1" oninput="syncAndUpdate('${pfx}')">
+    </div>
+    <div class="slider-field">
+      <div class="slider-head">
+        <label>Prix collatéral ($)</label>
+        <span class="sv" id="${pfx}-price-disp">$63,500</span>
+      </div>
+      <input type="range" id="${pfx}-price-slider" min="1000" max="200000" value="63500" step="500" oninput="syncAndUpdate('${pfx}')">
+    </div>
+    <button class="refresh-btn" onclick="refreshPrices()">
+      <span class="spin" id="${pfx}-spin">↻</span> Actualiser prix live
+    </button>
+    <p class="price-ts" id="${pfx}-ts">—</p>
+  </div>`;
+}
+
+function buildResultsHTML(pfx) {
+  return `
+  <div id="${pfx}-status-bar" class="status-bar">
+    <span class="status-txt" id="${pfx}-status-txt">—</span>
+    <span class="status-hf">HF <span id="${pfx}-hf-inline">—</span></span>
+  </div>
+
+  <div class="risk-wrap">
+    <div class="risk-bar-track">
+      <div class="risk-thumb" id="${pfx}-thumb"></div>
+    </div>
+    <div class="risk-labels">
+      <span>liquidation</span><span>vigilance</span><span>sécurisé</span>
+    </div>
+  </div>
+
+  <div class="metric-grid" id="${pfx}-mgrid">
+    <div class="metric span2" id="${pfx}-card-liq">
+      <div class="m-label">Prix de liquidation</div>
+      <div class="m-value" id="${pfx}-liq-price">—</div>
+      <div class="m-sub" id="${pfx}-liq-sub">—</div>
+    </div>
+    <div class="metric" id="${pfx}-card-ltv">
+      <div class="m-label">LTV actuel</div>
+      <div class="m-value" id="${pfx}-ltv-val">—</div>
+      <div class="m-sub">seuil <span id="${pfx}-lltv-ref">86%</span></div>
+    </div>
+    <div class="metric" id="${pfx}-card-hf">
+      <div class="m-label">Health factor</div>
+      <div class="m-value" id="${pfx}-hf-val">—</div>
+      <div class="m-sub">liquidable si ≤ 1</div>
+    </div>
+    <div class="metric" id="${pfx}-card-margin">
+      <div class="m-label">Marge ($)</div>
+      <div class="m-value" id="${pfx}-margin-val">—</div>
+      <div class="m-sub" id="${pfx}-margin-pct">—</div>
+    </div>
+    <div class="metric" id="${pfx}-card-collat">
+      <div class="m-label">Valeur collatéral</div>
+      <div class="m-value" id="${pfx}-collat-val">—</div>
+      <div class="m-sub" id="${pfx}-collat-sub">—</div>
+    </div>
+  </div>
+
+  <div class="sec-title" style="margin-top:8px">LTV selon le prix</div>
+  <div class="chart-legend">
+    <span><span class="leg-line" style="background:#60a5fa"></span>LTV</span>
+    <span><span class="leg-dash"></span>Seuil LLTV</span>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="${pfx}-chart" role="img" aria-label="Courbe LTV vs prix collatéral avec seuil de liquidation.">Courbe LTV.</canvas>
+  </div>`;
+}
+
+function initPanel(pfx, container) {
+  container.innerHTML = buildInputsHTML(pfx) + buildResultsHTML(pfx);
+}
+
+const isMobile = () => window.innerWidth < 768;
+
+function setupLayout() {
+  if (isMobile()) {
+    document.getElementById('mobile-content').innerHTML =
+      buildInputsHTML('m') + buildResultsHTML('m');
+    updateCalc('m');
+  } else {
+    document.getElementById('desktop-left').innerHTML = buildInputsHTML('d');
+    document.getElementById('desktop-right').innerHTML = buildResultsHTML('d');
+    updateCalc('d');
+  }
+}
+
+function getPrice(pfx) {
+  if (selectedToken === 'CUSTOM') {
+    return parseFloat(document.getElementById(pfx+'-custom-price')?.value) || 1000;
+  }
+  return livePrice[selectedToken] || 1000;
+}
+
+function selectToken(el, pfx) {
+  const picker = document.getElementById(pfx+'-token-picker');
+  picker.querySelectorAll('.tk').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selectedToken = el.dataset.token;
+  const cf = document.getElementById(pfx+'-custom-field');
+  if (cf) cf.style.display = selectedToken === 'CUSTOM' ? 'block' : 'none';
+  const p = getPrice(pfx);
+  const slider = document.getElementById(pfx+'-price-slider');
+  if (slider) { slider.max = Math.max(p*3, 10000); slider.value = p; }
+  updatePill();
+  updateCalc(pfx);
+}
+
+function syncAndUpdate(pfx) {
+  updateCalc(pfx);
+}
+
+function updateCalc(pfx) {
+  const g = id => document.getElementById(pfx+'-'+id);
+  if (!g('qty')) return;
+
+  const qty   = parseFloat(g('qty').value) || 0;
+  const debt  = parseFloat(g('debt').value) || 0;
+  const lltv  = parseFloat(g('lltv').value) / 100;
+  const price = parseFloat(g('price-slider').value) || getPrice(pfx);
+  const cName = g('collat-name').value || 'collat';
+  const bName = g('borrow-name').value || 'stable';
+
+  g('lltv-disp').textContent  = Math.round(lltv * 100) + '%';
+  g('lltv-ref').textContent   = Math.round(lltv * 100) + '%';
+  g('price-disp').textContent = fmtUSD(price);
+
+  const collatUSD = qty * price;
+  const liqPrice  = (qty > 0 && lltv > 0) ? debt / (qty * lltv) : 0;
+  const ltv       = collatUSD > 0 ? debt / collatUSD : 0;
+  const hf        = ltv > 0 ? lltv / ltv : 99;
+  const margin    = price - liqPrice;
+  const marginPct = price > 0 ? (margin / price) * 100 : 0;
+
+  g('liq-price').textContent = fmtUSD(liqPrice);
+  g('liq-sub').textContent   = cName + ' / ' + bName + ' — −' + (marginPct > 0 ? marginPct.toFixed(1) : 0) + '%';
+  g('ltv-val').textContent   = (ltv * 100).toFixed(1) + '%';
+  g('hf-val').textContent    = hf >= 99 ? '∞' : hf.toFixed(2);
+  g('hf-inline').textContent = hf >= 99 ? '∞' : hf.toFixed(2);
+  g('margin-val').textContent= margin > 0 ? fmtUSD(margin) : '—';
+  g('margin-pct').textContent= marginPct > 0 ? (marginPct.toFixed(1) + '% de marge') : 'déjà liquidable';
+  g('collat-val').textContent= fmtUSD(collatUSD);
+  g('collat-sub').textContent= qty.toFixed(4) + ' ' + cName;
+
+  const thumbPct = Math.max(2, Math.min(98, 100 - (ltv / lltv) * 100));
+  g('thumb').style.left = thumbPct + '%';
+
+  let cls = 'success';
+  let msg = 'Position saine';
+  if (ltv >= lltv)      { cls = 'danger';  msg = 'Liquidable maintenant'; }
+  else if (marginPct < 15) { cls = 'danger';  msg = 'Risque critique — marge < 15%'; }
+  else if (marginPct < 30) { cls = 'warning'; msg = 'Zone de vigilance'; }
+
+  const sb = g('status-bar');
+  sb.className = 'status-bar ' + cls;
+  const st = g('status-txt');
+  st.className = 'status-txt ' + cls;
+  st.textContent = msg;
+
+  const sc = (id, base, c) => { const el = g(id); if(el) el.className = base + (c?' '+c:''); };
+  sc('card-liq',    'metric span2', cls);
+  sc('card-ltv',    'metric', cls);
+  sc('card-hf',     'metric', cls);
+  sc('card-margin', 'metric', marginPct < 15 ? 'danger' : marginPct < 30 ? 'warning' : 'success');
+  sc('card-collat', 'metric', '');
+
+  drawChart(pfx, qty, debt, lltv, price);
+}
+
+const charts = {};
+function drawChart(pfx, qty, debt, lltv, currentPrice) {
+  const canvasId = pfx + '-chart';
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const liqP = qty > 0 ? debt / (qty * lltv) : 0;
+  const minP = Math.max(100, liqP * 0.5);
+  const maxP = currentPrice * 1.7;
+  const N = 60, step = (maxP - minP) / N;
+  const labels = [], ltvData = [];
+
+  for (let i = 0; i <= N; i++) {
+    const p = minP + i * step;
+    labels.push(p >= 1000 ? '$' + Math.round(p/1000) + 'k' : '$' + Math.round(p));
+    ltvData.push(parseFloat((qty*p > 0 ? (debt/(qty*p))*100 : 0).toFixed(2)));
+  }
+  const lltvLine = Array(N+1).fill(parseFloat((lltv*100).toFixed(2)));
+
+  const isDark = true;
+  const gc = 'rgba(255,255,255,0.05)';
+  const tc = '#555';
+
+  if (charts[pfx]) {
+    charts[pfx].data.labels = labels;
+    charts[pfx].data.datasets[0].data = ltvData;
+    charts[pfx].data.datasets[1].data = lltvLine;
+    charts[pfx].update('none');
+    return;
+  }
+
+  charts[pfx] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'LTV', data:ltvData, borderColor:'#60a5fa', borderWidth:2, pointRadius:0, fill:false, tension:0.3 },
+        { label:'LLTV', data:lltvLine, borderColor:'#f87171', borderWidth:1.5, borderDash:[5,4], pointRadius:0, fill:false }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{
+          backgroundColor:'#181818', borderColor:'#333', borderWidth:1,
+          titleColor:'#888', bodyColor:'#e8e8e8',
+          titleFont:{ family:"'IBM Plex Mono'", size:11 },
+          bodyFont:{ family:"'IBM Plex Mono'", size:11 },
+          callbacks:{
+            title: ctx => 'Prix : ' + ctx[0].label,
+            label: ctx => ctx.datasetIndex===0 ? 'LTV : '+ctx.parsed.y.toFixed(1)+'%' : 'Seuil : '+ctx.parsed.y.toFixed(0)+'%'
+          }
+        }
+      },
+      scales:{
+        x:{ ticks:{ maxTicksLimit:7, font:{size:10,family:"'IBM Plex Mono'"}, color:tc }, grid:{ color:gc }, border:{ color:gc } },
+        y:{ ticks:{ font:{size:10,family:"'IBM Plex Mono'"}, color:tc, callback:v=>v+'%' }, grid:{ color:gc }, border:{ color:gc } }
+      }
+    }
+  });
+}
+
+function updatePill() {
+  const p = selectedToken === 'CUSTOM' ? null : livePrice[selectedToken];
+  document.getElementById('pill-txt').textContent = p ? selectedToken+' '+fmtUSD(p) : 'Custom';
+}
+
+async function refreshPrices() {
+  document.querySelectorAll('.spin').forEach(s => s.classList.add('go'));
+  document.getElementById('price-dot').className = 'dot loading';
+  try {
+    const res = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd',
+      { signal: AbortSignal.timeout(8000) }
+    );
+    const data = await res.json();
+    if (data.bitcoin) livePrice.BTC = data.bitcoin.usd;
+    if (data.ethereum) livePrice.ETH = data.ethereum.usd;
+    const ts = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    document.querySelectorAll('[id$="-ts"]').forEach(el => el.textContent = 'MAJ '+ts+' · CoinGecko');
+    document.getElementById('price-dot').className = 'dot';
+    if (selectedToken !== 'CUSTOM') {
+      const pfx = isMobile() ? 'm' : 'd';
+      const slider = document.getElementById(pfx+'-price-slider');
+      if (slider) {
+        const p = livePrice[selectedToken];
+        slider.max = Math.max(p*3, 10000);
+        slider.value = p;
+      }
+    }
+    updatePill();
+    const pfx = isMobile() ? 'm' : 'd';
+    updateCalc(pfx);
+  } catch(e) {
+    document.getElementById('price-dot').className = 'dot error';
+    document.querySelectorAll('[id$="-ts"]').forEach(el => el.textContent = 'Hors ligne — prix manuel');
+  }
+  document.querySelectorAll('.spin').forEach(s => s.classList.remove('go'));
+}
+
+setupLayout();
+window.addEventListener('resize', () => {
+  const wasMobile = !!document.getElementById('mobile-content').innerHTML.trim();
+  const nowMobile = isMobile();
+  if (wasMobile !== nowMobile) { charts['m'] = null; charts['d'] = null; setupLayout(); }
+});
+refreshPrices();
+</script>
+</body>
+</html>
