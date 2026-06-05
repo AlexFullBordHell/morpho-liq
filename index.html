@@ -314,7 +314,11 @@ function buildInputsHTML(pfx) {
         <label>Prix collatéral ($)</label>
         <span class="sv" id="${pfx}-price-disp">$63,500</span>
       </div>
-      <input type="range" id="${pfx}-price-slider" min="1000" max="200000" value="63500" step="500" oninput="syncAndUpdate('${pfx}')">
+      <input type="range" id="${pfx}-price-slider" min="0" max="500000" value="63500" step="1" oninput="onPriceSliderChange('${pfx}')">
+      <div style="margin-top:10px">
+        <label style="font-size:12px;color:var(--text2);font-family:var(--mono);letter-spacing:0.03em;display:block;margin-bottom:5px">Saisie manuelle ($)</label>
+        <input type="number" id="${pfx}-price-manual" value="63500" min="0" max="500000" step="1" style="width:100%" oninput="onPriceManualChange('${pfx}')">
+      </div>
     </div>
     <button class="refresh-btn" onclick="refreshPrices()">
       <span class="spin" id="${pfx}-spin">↻</span> Actualiser prix live
@@ -411,8 +415,21 @@ function selectToken(el, pfx) {
   if (cf) cf.style.display = selectedToken === 'CUSTOM' ? 'block' : 'none';
   const p = getPrice(pfx);
   const slider = document.getElementById(pfx+'-price-slider');
-  if (slider) { slider.max = Math.max(p*3, 10000); slider.value = p; }
+  if (slider) { slider.max = 500000; slider.value = p; }
   updatePill();
+  updateCalc(pfx);
+}
+
+function onPriceSliderChange(pfx) {
+  const val = document.getElementById(pfx+'-price-slider').value;
+  document.getElementById(pfx+'-price-manual').value = val;
+  updateCalc(pfx);
+}
+
+function onPriceManualChange(pfx) {
+  let val = parseFloat(document.getElementById(pfx+'-price-manual').value) || 0;
+  val = Math.max(0, Math.min(500000, val));
+  document.getElementById(pfx+'-price-slider').value = val;
   updateCalc(pfx);
 }
 
@@ -427,7 +444,7 @@ function updateCalc(pfx) {
   const qty   = parseFloat(g('qty').value) || 0;
   const debt  = parseFloat(g('debt').value) || 0;
   const lltv  = parseFloat(g('lltv').value) / 100;
-  const price = parseFloat(g('price-slider').value) || getPrice(pfx);
+  const price = parseFloat(g('price-slider').value) || 0;
   const cName = g('collat-name').value || 'collat';
   const bName = g('borrow-name').value || 'stable';
 
@@ -437,8 +454,8 @@ function updateCalc(pfx) {
 
   const collatUSD = qty * price;
   const liqPrice  = (qty > 0 && lltv > 0) ? debt / (qty * lltv) : 0;
-  const ltv       = collatUSD > 0 ? debt / collatUSD : 0;
-  const hf        = ltv > 0 ? lltv / ltv : 99;
+  const ltv       = collatUSD > 0 ? debt / collatUSD : 999;
+  const hf        = ltv > 0 && ltv < 999 ? lltv / ltv : (collatUSD === 0 ? 0 : 99);
   const margin    = price - liqPrice;
   const marginPct = price > 0 ? (margin / price) * 100 : 0;
 
@@ -565,8 +582,10 @@ async function refreshPrices() {
       const slider = document.getElementById(pfx+'-price-slider');
       if (slider) {
         const p = livePrice[selectedToken];
-        slider.max = Math.max(p*3, 10000);
+        slider.max = 500000;
         slider.value = p;
+        const manual = document.getElementById(pfx+'-price-manual');
+        if (manual) manual.value = p;
       }
     }
     updatePill();
